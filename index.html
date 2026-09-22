@@ -1,136 +1,236 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Freaks Check-in</title>
 
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+  <title>Freaks Acro Camp - Check-in</title>
+
+  <script
+    src="https://unpkg.com/html5-qrcode"
+    type="text/javascript">
+  </script>
 
   <style>
+
     body {
       font-family: Arial, sans-serif;
       text-align: center;
-      background: #111;
-      color: white;
+      background: #f5f5f5;
+      margin: 0;
       padding: 20px;
     }
 
     h1 {
-      margin-bottom: 20px;
+      margin-bottom: 5px;
     }
 
     #reader {
-      max-width: 500px;
-      margin: auto;
-      background: white;
-      padding: 10px;
+      width: 100%;
+      max-width: 450px;
+      margin: 20px auto;
+    }
+
+    button {
+      padding: 15px 25px;
+      font-size: 18px;
+      border: none;
       border-radius: 10px;
+      cursor: pointer;
+      margin: 10px;
     }
 
     #result {
-      margin-top: 25px;
-      font-size: 24px;
+      display: none;
+      max-width: 450px;
+      margin: 20px auto;
+      padding: 20px;
+      border-radius: 15px;
+      font-size: 22px;
       font-weight: bold;
     }
+
+    .success {
+      background: #d4edda;
+      color: #155724;
+    }
+
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+    }
+
+    .info {
+      background: #fff3cd;
+      color: #856404;
+    }
+
   </style>
 </head>
 
 <body>
 
-  <h1>FREAKS CHECK-IN</h1>
+  <h1>FREAKS ACRO CAMP</h1>
+
+  <p>QR CHECK-IN</p>
+
+  <button id="startButton">
+    📷 START SCANNER
+  </button>
 
   <div id="reader"></div>
 
-  <div id="result">Ready to scan</div>
+  <div id="result"></div>
 
-  <script>
+<script>
 
-    const SCRIPT_URL =
-      "https://script.google.com/macros/s/AKfycbwwg0tEM2xR3Nkt2DUy6_iqzpUjth4NKp6J36vSP-nzJhA0fu-KuvPZMAM90QMQ9sSX/exec";
+const API_URL =
+"https://script.google.com/macros/s/AKfycbxBr0UL7cZ6abafKr4QHxKzdMXW36t7rnyu3ymI32FB5wnv4KK5074b_TCe-RX--dn5fQ/exec";
 
-    let scanning = true;
+let scanner = null;
+let scanning = false;
 
-    function onScanSuccess(decodedText) {
 
-      if (!scanning) return;
+/* -------------------------
+   SHOW RESULT
+------------------------- */
+
+function showResult(message, type) {
+
+  const result =
+    document.getElementById("result");
+
+  result.style.display = "block";
+
+  result.className = type;
+
+  result.innerHTML = message;
+}
+
+
+/* -------------------------
+   START SCANNER
+------------------------- */
+
+document
+  .getElementById("startButton")
+  .addEventListener("click", startScanner);
+
+
+function startScanner() {
+
+  if (scanning) {
+    return;
+  }
+
+  showResult(
+    "📷 Starting camera...",
+    "info"
+  );
+
+  scanner =
+    new Html5Qrcode("reader");
+
+  scanner.start(
+
+    {
+      facingMode: "environment"
+    },
+
+    {
+      fps: 10,
+
+      qrbox: {
+        width: 250,
+        height: 250
+      }
+    },
+
+    function(decodedText) {
+
+      if (!scanning) {
+        return;
+      }
 
       scanning = false;
 
-      document.getElementById("result").innerHTML =
-        "Checking " + decodedText + "...";
+      scanner
+        .stop()
+        .then(function() {
 
-      window.freaksCheckIn = function(data) {
+          checkRegistration(decodedText);
 
-        if (data.status === "success") {
+        })
+        .catch(function() {
 
-          document.getElementById("result").innerHTML =
-            "✅ CHECKED IN";
+          checkRegistration(decodedText);
 
-        } else if (data.status === "already") {
+        });
 
-          document.getElementById("result").innerHTML =
-            "⚠️ ALREADY CHECKED IN";
+    },
 
-        } else {
+    function(errorMessage) {
 
-          document.getElementById("result").innerHTML =
-            "❌ INVALID QR CODE";
-        }
+      // Ignore normal scanning errors
 
-        setTimeout(function() {
-
-          scanning = true;
-
-          document.getElementById("result").innerHTML =
-            "Ready to scan";
-
-        }, 2500);
-
-      };
-
-      const script =
-        document.createElement("script");
-
-      script.src =
-        SCRIPT_URL +
-        "?id=" +
-        encodeURIComponent(decodedText) +
-        "&callback=freaksCheckIn";
-
-      document.head.appendChild(script);
     }
 
-    function onScanFailure(error) {
-      // Ignore scan failures
-    }
+  )
 
-    const html5QrCode =
-      new Html5Qrcode("reader");
+  .then(function() {
 
-    html5QrCode.start(
-      { facingMode: "environment" },
-      {
-        fps: 10,
-        qrbox: {
-          width: 250,
-          height: 250
-        }
-      },
-      onScanSuccess,
-      onScanFailure
-    ).catch(function(error) {
+    scanning = true;
 
-      document.getElementById("result").innerHTML =
-        "❌ CAMERA ERROR";
+    showResult(
+      "📷 Camera ready<br><br>Scan the QR code",
+      "info"
+    );
 
-      console.error(error);
+  })
 
-    });
+  .catch(function(error) {
 
-  </script>
+    scanning = false;
+
+    showResult(
+      "❌ CAMERA ERROR<br><br>" +
+      error,
+      "error"
+    );
+
+  });
+}
+
+
+/* -------------------------
+   CHECK REGISTRATION
+------------------------- */
+
+function checkRegistration(qrCode) {
+
+  showResult(
+    "⏳ Checking...",
+    "info"
+  );
+
+  const url =
+    API_URL +
+    "?qr=" +
+    encodeURIComponent(qrCode);
+
+  /*
+    We navigate directly to Apps Script.
+    No fetch.
+    No JSONP.
+    No CORS.
+  */
+
+  window.location.href = url;
+}
+
+</script>
 
 </body>
 </html>
-```
