@@ -60,10 +60,13 @@
       document.getElementById("result").innerHTML =
         "Checking " + decodedText + "...";
 
-      const callbackName =
-        "freaksCallback_" + Date.now();
+      const url =
+        SCRIPT_URL +
+        "?id=" +
+        encodeURIComponent(decodedText) +
+        "&callback=freaksCheckIn";
 
-      window[callbackName] = function(data) {
+      window.freaksCheckIn = function(data) {
 
         if (data.status === "success") {
 
@@ -90,21 +93,14 @@
 
         }, 2500);
 
-        delete window[callbackName];
       };
 
       const script =
         document.createElement("script");
 
-      script.src =
-        SCRIPT_URL +
-        "?id=" +
-        encodeURIComponent(decodedText) +
-        "&callback=" +
-        callbackName;
+      script.src = url;
 
       document.head.appendChild(script);
-
     }
 
     function onScanFailure(error) {
@@ -125,12 +121,12 @@
       },
       onScanSuccess,
       onScanFailure
-    ).catch(function(err) {
+    ).catch(function(error) {
 
       document.getElementById("result").innerHTML =
         "❌ CAMERA ERROR";
 
-      console.error(err);
+      console.error(error);
 
     });
 
