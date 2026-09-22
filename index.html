@@ -101,19 +101,6 @@
         "&callback=" +
         callbackName;
 
-      script.onerror = function() {
-
-        document.getElementById("result").innerHTML =
-          "❌ CONNECTION ERROR";
-
-        scanning = true;
-
-        delete window[callbackName];
-
-        if (document.body.contains(script)) {
-          document.body.removeChild(script);
-        }
-      };
 
       document.body.appendChild(script);
     }
