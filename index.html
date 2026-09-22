@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -60,12 +61,6 @@
       document.getElementById("result").innerHTML =
         "Checking " + decodedText + "...";
 
-      const url =
-        SCRIPT_URL +
-        "?id=" +
-        encodeURIComponent(decodedText) +
-        "&callback=freaksCheckIn";
-
       window.freaksCheckIn = function(data) {
 
         if (data.status === "success") {
@@ -99,11 +94,10 @@
         document.createElement("script");
 
       script.src =
-  SCRIPT_URL +
-  "?id=" +
-  encodeURIComponent(decodedText) +
-  "&callback=" +
-  callbackName;
+        SCRIPT_URL +
+        "?id=" +
+        encodeURIComponent(decodedText) +
+        "&callback=freaksCheckIn";
 
       document.head.appendChild(script);
     }
@@ -139,3 +133,4 @@
 
 </body>
 </html>
+```
