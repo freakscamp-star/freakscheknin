@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Freaks Check-in</title>
+
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #111;
+      color: white;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    #reader {
+      max-width: 500px;
+      margin: auto;
+      background: white;
+      padding: 10px;
+      border-radius: 10px;
+    }
+
+    #result {
+      margin-top: 25px;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 14px 25px;
+      font-size: 18px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>FREAKS CHECK-IN</h1>
+
+  <div id="reader"></div>
+
+  <div id="result">Ready to scan</div>
+
+  <script>
+
+    // ΘΑ ΒΑΛΟΥΜΕ ΕΔΩ ΤΟ GOOGLE APPS SCRIPT URL
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzh7JYDDIxiXEid5_GDSB-7s-F52QexypmaOD46SgB5TTybza6_DUZ1Q1pY9iAgVp7f/exec";
+
+    let scanning = true;
+
+    function onScanSuccess(decodedText) {
+
+      if (!scanning) return;
+
+      scanning = false;
+
+      document.getElementById("result").innerHTML =
+        "Checking " + decodedText + "...";
+
+      fetch(SCRIPT_URL, {
+        method: "POST",
+        body: JSON.stringify({
+          registrationId: decodedText
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+
+        if (data.status === "success") {
+
+          document.getElementById("result").innerHTML =
+            "✅ CHECKED IN";
+
+        } else if (data.status === "already") {
+
+          document.getElementById("result").innerHTML =
+            "⚠️ ALREADY CHECKED IN";
+
+        } else {
+
+          document.getElementById("result").innerHTML =
+            "❌ INVALID QR CODE";
+        }
+
+        setTimeout(() => {
+          scanning = true;
+          document.getElementById("result").innerHTML =
+            "Ready to scan";
+        }, 2500);
+
+      })
+      .catch(error => {
+
+        console.error(error);
+
+        document.getElementById("result").innerHTML =
+          "❌ CONNECTION ERROR";
+
+        setTimeout(() => {
+          scanning = true;
+          document.getElementById("result").innerHTML =
+            "Ready to scan";
+        }, 2500);
+      });
+    }
+
+    function onScanFailure(error) {
+      // Αγνοούμε τα προσωρινά errors του scanner
+    }
+
+    const html5QrCode = new Html5Qrcode("reader");
+
+    html5QrCode.start(
+      { facingMode: "environment" },
+      {
+        fps: 10,
+        qrbox: { width: 250, height: 250 }
+      },
+      onScanSuccess,
+      onScanFailure
+    ).catch(err => {
+      document.getElementById("result").innerHTML =
+        "❌ CAMERA ERROR";
+      console.error(err);
+    });
+
+  </script>
+
+</body>
+</html>
