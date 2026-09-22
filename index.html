@@ -33,15 +33,6 @@
       font-size: 24px;
       font-weight: bold;
     }
-
-    button {
-      margin-top: 20px;
-      padding: 14px 25px;
-      font-size: 18px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
   </style>
 </head>
 
@@ -55,7 +46,7 @@
 
   <script>
 
-   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwwg0tEM2xR3Nkt2DUy6_iqzpUjth4NKp6J36vSP-nzJhA0fu-KuvPZMAM90QMQ9sSX/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwwg0tEM2xR3Nkt2DUy6_iqzpUjth4NKp6J36vSP-nzJhA0fu-KuvPZMAM90QMQ9sSX/exec";
 
     let scanning = true;
 
@@ -68,54 +59,88 @@
       document.getElementById("result").innerHTML =
         "Checking " + decodedText + "...";
 
-    const callbackName = "freaksCallback_" + Date.now();
+      const callbackName = "freaksCallback_" + Date.now();
 
-window[callbackName] = function(data) {
+      window[callbackName] = function(data) {
 
-  if (data.status === "success") {
+        if (data.status === "success") {
 
-    document.getElementById("result").innerHTML =
-      "✅ CHECKED IN";
+          document.getElementById("result").innerHTML =
+            "✅ CHECKED IN";
 
-  } else if (data.status === "already") {
+        } else if (data.status === "already") {
 
-    document.getElementById("result").innerHTML =
-      "⚠️ ALREADY CHECKED IN";
+          document.getElementById("result").innerHTML =
+            "⚠️ ALREADY CHECKED IN";
 
-  } else {
+        } else {
 
-    document.getElementById("result").innerHTML =
-      "❌ INVALID QR CODE";
-  }
+          document.getElementById("result").innerHTML =
+            "❌ INVALID QR CODE";
+        }
 
-  setTimeout(() => {
-    scanning = true;
-    document.getElementById("result").innerHTML =
-      "Ready to scan";
-  }, 2500);
+        setTimeout(() => {
+          scanning = true;
+          document.getElementById("result").innerHTML =
+            "Ready to scan";
+        }, 2500);
 
-  delete window[callbackName];
-  document.body.removeChild(script);
-};
+        delete window[callbackName];
 
-const script = document.createElement("script");
+        if (document.body.contains(script)) {
+          document.body.removeChild(script);
+        }
+      };
 
-script.src =
-  SCRIPT_URL +
-  "?id=" +
-  encodeURIComponent(decodedText) +
-  "&callback=" +
-  callbackName;
+      const script = document.createElement("script");
 
-script.onerror = function() {
+      script.src =
+        SCRIPT_URL +
+        "?id=" +
+        encodeURIComponent(decodedText) +
+        "&callback=" +
+        callbackName;
 
-  document.getElementById("result").innerHTML =
-    "❌ CONNECTION ERROR";
+      script.onerror = function() {
 
-  scanning = true;
+        document.getElementById("result").innerHTML =
+          "❌ CONNECTION ERROR";
 
-  delete window[callbackName];
-  document.body.removeChild(script);
-};
+        scanning = true;
 
-document.body.appendChild(script);
+        delete window[callbackName];
+
+        if (document.body.contains(script)) {
+          document.body.removeChild(script);
+        }
+      };
+
+      document.body.appendChild(script);
+    }
+
+    function onScanFailure(error) {
+      // Ignore scan failures
+    }
+
+    const html5QrCode = new Html5Qrcode("reader");
+
+    html5QrCode.start(
+      { facingMode: "environment" },
+      {
+        fps: 10,
+        qrbox: { width: 250, height: 250 }
+      },
+      onScanSuccess,
+      onScanFailure
+    ).catch(err => {
+
+      document.getElementById("result").innerHTML =
+        "❌ CAMERA ERROR";
+
+      console.error(err);
+    });
+
+  </script>
+
+</body>
+</html>
