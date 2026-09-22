@@ -69,74 +69,54 @@
       document.getElementById("result").innerHTML =
         "Checking " + decodedText + "...";
 
-      fetch(SCRIPT_URL, {
-        method: "POST",
-        body: JSON.stringify({
-          registrationId: decodedText
-        })
-      })
-      .then(response => response.json())
-      .then(data => {
+    const callbackName = "freaksCallback_" + Date.now();
 
-        if (data.status === "success") {
+window[callbackName] = function(data) {
 
-          document.getElementById("result").innerHTML =
-            "✅ CHECKED IN";
+  if (data.status === "success") {
 
-        } else if (data.status === "already") {
+    document.getElementById("result").innerHTML =
+      "✅ CHECKED IN";
 
-          document.getElementById("result").innerHTML =
-            "⚠️ ALREADY CHECKED IN";
+  } else if (data.status === "already") {
 
-        } else {
+    document.getElementById("result").innerHTML =
+      "⚠️ ALREADY CHECKED IN";
 
-          document.getElementById("result").innerHTML =
-            "❌ INVALID QR CODE";
-        }
+  } else {
 
-        setTimeout(() => {
-          scanning = true;
-          document.getElementById("result").innerHTML =
-            "Ready to scan";
-        }, 2500);
+    document.getElementById("result").innerHTML =
+      "❌ INVALID QR CODE";
+  }
 
-      })
-      .catch(error => {
+  setTimeout(() => {
+    scanning = true;
+    document.getElementById("result").innerHTML =
+      "Ready to scan";
+  }, 2500);
 
-        console.error(error);
+  delete window[callbackName];
+  document.body.removeChild(script);
+};
 
-        document.getElementById("result").innerHTML =
-          "❌ CONNECTION ERROR";
+const script = document.createElement("script");
 
-        setTimeout(() => {
-          scanning = true;
-          document.getElementById("result").innerHTML =
-            "Ready to scan";
-        }, 2500);
-      });
-    }
+script.src =
+  SCRIPT_URL +
+  "?id=" +
+  encodeURIComponent(decodedText) +
+  "&callback=" +
+  callbackName;
 
-    function onScanFailure(error) {
-      // Αγνοούμε τα προσωρινά errors του scanner
-    }
+script.onerror = function() {
 
-    const html5QrCode = new Html5Qrcode("reader");
+  document.getElementById("result").innerHTML =
+    "❌ CONNECTION ERROR";
 
-    html5QrCode.start(
-      { facingMode: "environment" },
-      {
-        fps: 10,
-        qrbox: { width: 250, height: 250 }
-      },
-      onScanSuccess,
-      onScanFailure
-    ).catch(err => {
-      document.getElementById("result").innerHTML =
-        "❌ CAMERA ERROR";
-      console.error(err);
-    });
+  scanning = true;
 
-  </script>
+  delete window[callbackName];
+  document.body.removeChild(script);
+};
 
-</body>
-</html>
+document.body.appendChild(script);
